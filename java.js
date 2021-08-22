@@ -12,31 +12,36 @@ export function compile(filepath) {
     });
 }
 
-export function run(progpath) {
+export function run(progpath, stdio, controller) {
 
     return new Promise((resolve, reject) => {
         try {
-            let child = spawn('java', [progpath]);
-
-            let stdio = readline.createInterface({
-                input: process.stdin,
-                output: process.stdout
-            });
+            let child = spawn('java', [progpath], {signal: controller.signal});
 
             child.stdout.on('data', data => process.stdout.write(data));
             child.stderr.on('data', data => process.stderr.write(data));
 
+            function writeToChild(line) {
+                console.log('sending to program');
+                child.stdin.write(`${line}\n`);
+            }
+
+            stdio.on('line', writeToChild);
+
             child.on('close', (code) => {
-                stdio.close(); 
-                stdio.removeAllListeners();
-
+                stdio.removeListener('line', writeToChild);
+                // console.log('closing');
                 console.log(`"${progpath}" exited with code ${code}`);
-                resolve();
+                resolve(false);
+                // resolve({interrupted: false});
             });
 
-            stdio.on('line', line => {
-                child.stdin.write(line + '\n');
+            child.on('error', (err) => {
+                // console.log('aborting');
+                // console.error(err);
+                resolve(true);
             });
+
         } catch (err) {
             reject(err);
         }
