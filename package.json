@@ -1,0 +1,20 @@
+{
+  "name": "java-listener",
+  "version": "1.0.0",
+  "description": "node script to automatically compile and run java files when an IDE is not preferred",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/selym3/java-listener.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/selym3/java-listener/issues"
+  },
+  "homepage": "https://github.com/selym3/java-listener#readme"
+}
