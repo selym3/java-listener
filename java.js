@@ -47,25 +47,3 @@ export function run(progpath, stdio, controller) {
         }
     });
 }
-
-if (import.meta.url === `file://${process.argv[1]}`) {
-    (async () => {
-
-        const name = 'GuessingGame';
-    
-        console.log('Compiling!');
-        console.log('---');
-        let { out, err } = await compile(`test/${name}.java`);
-        console.log(`stdout: ${out}`);
-        console.log(`stderr: ${err}`);
-        console.log('---');
-    
-        console.log();
-    
-        console.log('Running!');
-        console.log('---');
-        await run(`test.${name}`);
-        console.log('---');
-    
-    })();
-}
