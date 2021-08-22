@@ -50,13 +50,14 @@ if (import.meta.url === `file://${process.argv[1]}`) {
         watcher(javapath, async filename => {
             // Compile the modified file
             let compilepath = getCompilePath(filename);
+            
+            active = compilepath; // set active file as soon as posible
+            
             log(`Compiling ${compilepath}...`);
             
             let { stdout, stderr } = await compile(compilepath);
             if (stdout) warn(stdout);
             if (stderr) log(stderr);
-
-            active = compilepath;
 
             // If a program is running, kill it
             if (running) {
