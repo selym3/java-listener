@@ -22,7 +22,7 @@ export function run(progpath, stdio, controller) {
             child.stderr.on('data', data => process.stderr.write(data));
 
             function writeToChild(line) {
-                console.log('sending to program');
+                // console.log('sending to program');
                 child.stdin.write(`${line}\n`);
             }
 
@@ -43,7 +43,7 @@ export function run(progpath, stdio, controller) {
             });
 
         } catch (err) {
-            reject(err);
+            console.error(err);
         }
     });
 }

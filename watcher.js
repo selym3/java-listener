@@ -1,6 +1,5 @@
 import { watch, lstat } from 'fs/promises';
 import path from 'path';
-import { compile } from './java.js';
 
 class Lock {
     update() {
@@ -53,21 +52,16 @@ export class Watcher {
         return this.lastModified;
     }
 
-    async* run() {
+    async* watch() {
 
         // This loop is waiting on file changes to recompile
         for await (let event of this.watcher) {
             if (!this.lock.isLocked()) {
-                let path = await this.getCompilePath(event.filename);
-
-                console.log(`Compiling ${path}...`);
-
-                let { out, err } = await compile(path);
-                if (out) console.log(out);
-                if (err) console.error(err);
-
-                this.lastModified = event.filename;
-                yield event.filename;
+                if (event.filename.endsWith('.java')) {
+                    let javafile = await this.getCompilePath(event.filename);
+                    this.lastModified = event.filename;
+                    yield javafile;
+                }
             }
             this.lock.update();
         }
