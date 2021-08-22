@@ -18,6 +18,8 @@ export function run(progpath, stdio, controller) {
         try {
             let child = spawn('java', [progpath], {signal: controller.signal});
 
+            let aborted = false;
+
             child.stdout.on('data', data => process.stdout.write(data));
             child.stderr.on('data', data => process.stderr.write(data));
 
@@ -31,15 +33,16 @@ export function run(progpath, stdio, controller) {
             child.on('close', (code) => {
                 stdio.removeListener('line', writeToChild);
                 // console.log('closing');
-                console.log(`"${progpath}" exited with code ${code}`);
-                resolve(false);
+                // console.log(`"${progpath}" exited with code ${code}`);
+                resolve({ aborted, code });
                 // resolve({interrupted: false});
             });
 
             child.on('error', (err) => {
                 // console.log('aborting');
                 // console.error(err);
-                resolve(true);
+                // resolve(true);
+                aborted = true;
             });
 
         } catch (err) {

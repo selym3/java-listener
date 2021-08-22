@@ -5,6 +5,8 @@ import { compile, run } from './java.js';
 import { lstatSync } from 'fs';
 import path from 'path';
 
+import { warn, welcome, log } from './logger.js';
+
 if (import.meta.url === `file://${process.argv[1]}`) {
     (async () => {
 
@@ -14,9 +16,11 @@ if (import.meta.url === `file://${process.argv[1]}`) {
 
         let javapath = process.argv[2];
         if (javapath === undefined) {
-            console.error(`No path provided, using ${process.cwd()}`)
+            warn(`No path provided as a program argument, using this directory`);
+            // console.error(`No path provided, using ${process.cwd()}`)
             javapath = './';
         }
+        welcome(javapath);
 
         let isDirectory = lstatSync(javapath).isDirectory();
 
@@ -46,17 +50,16 @@ if (import.meta.url === `file://${process.argv[1]}`) {
         watcher(javapath, async filename => {
             // Compile the modified file
             let compilepath = getCompilePath(filename);
-            console.log(`Compiling ${javafile}...`);
+            log(`Compiling ${compilepath}...`);
             
             let { stdout, stderr } = await compile(compilepath);
-            if (stdout) console.log(stdout);
-            if (stderr) console.log(stderr);
+            if (stdout) warn(stdout);
+            if (stderr) log(stderr);
 
             active = compilepath;
 
             // If a program is running, kill it
             if (running) {
-                console.log('Ending execution');
                 await abortProgram();
             }
         });
@@ -77,14 +80,18 @@ if (import.meta.url === `file://${process.argv[1]}`) {
             // Determine what file to run
             let program = getProgramPath();
             if (program === null) {
-                console.error('Do not know which file to modify, modify and save the file you want to be run');
+                warn('Do not know which file to modify, modify and save the file you want to be run');
                 return;
             }
         
             // Run the file
-            console.log(`Running ${program}...`);
+            log(`Running ${program}...`);
             running = true;
-            await run(program, stdio, controller);
+            let { aborted, code } = await run(program, stdio, controller);
+            log(
+                ...(`${ aborted ? `"${program}" was killed earlyX` : ''}"${program}" exited with code ${code}`.split('X'))    
+            );
+
             running = false;
         }
 
