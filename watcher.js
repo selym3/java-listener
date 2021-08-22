@@ -4,35 +4,61 @@ class Lock {
     update() {
         throw new Error('Method update() of class Lock not implemented');
     }
-    isLocked() {
-        throw new Error('Method isLocked() of class Lock not implemented');
+    isUnlocked() {
+        throw new Error('Method isUnlocked() of class Lock not implemented');
     }
 }
 
-class EvenOddLock extends Lock {
-    constructor() {
+class CountLock extends Lock {
+    constructor(unlockEvery) {
         super();
         this.tick = 0;
+        this.unlockEvery = unlockEvery;
     }
 
     update() {
-        ++this.tick;
-        this.tick %= 2;
+        this.tick++;
+        this.tick%=this.unlockEvery;
     }
 
-    isLocked() {
-        return this.tick == 1;
+    isUnlocked() {
+        return this.tick == 0;
+    }
+}
+class EvenOddLock extends CountLock {
+    constructor() {
+        super(2);
+    }
+}
+
+class TimeLock extends Lock {
+    constructor(wait) {
+        super();
+        this.wait = wait;
+        this.time = Date.now();
     }
 
+    update() {}
+
+    isUnlocked() {
+        let now = Date.now();
+        let unlocked = this.time + this.wait < now;
+        
+        if (unlocked) {
+            this.time = now;
+            return true;
+        }
+        else return false;
+    }
 }
 
 export function watcher(javapath, callback) {
-    let lock = new EvenOddLock();
+    let lock = new TimeLock(500);
 
     watch(javapath, async (_, filename) => {
-        if (!lock.isLocked()) {
+        if (lock.isUnlocked()) {
             if (filename.endsWith('.java')) {
-                await callback(getCompilePath(filename));
+                await callback(filename);
             }
         }
         lock.update();
