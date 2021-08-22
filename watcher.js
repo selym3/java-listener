@@ -33,6 +33,8 @@ export class Watcher {
         this.javapath = javapath;
         this.watcher = watch(javapath);
         this.lock = new EvenOddLock();
+
+        this.lastModified = null;
     }
     
     async isPathDirectory() {
@@ -47,7 +49,11 @@ export class Watcher {
         }
     }
 
-    async run() {
+    getLastModified() {
+        return this.lastModified;
+    }
+
+    async* run() {
 
         // This loop is waiting on file changes to recompile
         for await (let event of this.watcher) {
@@ -59,6 +65,9 @@ export class Watcher {
                 let { out, err } = await compile(path);
                 if (out) console.log(out);
                 if (err) console.error(err);
+
+                this.lastModified = event.filename;
+                yield event.filename;
             }
             this.lock.update();
         }
