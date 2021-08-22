@@ -1,5 +1,4 @@
-import { watch, lstat } from 'fs/promises';
-import path from 'path';
+import { watch, lstatSync } from 'fs';
 
 class Lock {
     update() {
@@ -27,54 +26,16 @@ class EvenOddLock extends Lock {
 
 }
 
-export class Watcher {
-    constructor(javapath) {
-        this.javapath = javapath;
-        this.watcher = watch(javapath);
-        this.lock = new EvenOddLock();
+export function watcher(javapath, callback) {
+    let lock = new EvenOddLock();
 
-        this.lastModified = null;
-    }
-    
-    async isPathDirectory() {
-        return (await lstat(this.javapath)).isDirectory();
-    }
-
-    async getCompilePath(filename) {
-        if (await this.isPathDirectory()) {
-            return path.join(this.javapath, filename);
-        } else {
-            return this.javapath;
-        }
-    }
-
-    getLastModified() {
-        return this.lastModified;
-    }
-
-    async* watch() {
-
-        // This loop is waiting on file changes to recompile
-        for await (let event of this.watcher) {
-            if (!this.lock.isLocked()) {
-                if (event.filename.endsWith('.java')) {
-                    let javafile = await this.getCompilePath(event.filename);
-                    this.lastModified = event.filename;
-                    yield javafile;
-                }
+    watch(javapath, async (_, filename) => {
+        if (!lock.isLocked()) {
+            if (filename.endsWith('.java')) {
+                await callback(getCompilePath(filename));
             }
-            this.lock.update();
         }
-    }
+        lock.update();
+    });
 }
 
-if (import.meta.url === `file://${process.argv[1]}`) {
-    (async () => {
-
-        const filepath = 'test/';//GuessingGame.java';
-        const watcher = new Watcher(filepath);
-
-        await watcher.run();
-    
-    })();
-}
