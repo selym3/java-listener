@@ -1,13 +1,13 @@
 import { spawn, exec } from 'child_process';
-
+import readline from 'readline';
 
 function compile(filepath) {
     return new Promise((resolve, reject) => {
         exec(`javac ${filepath}`, (error, stdout, stderr) => {
             if (error)
                 reject(error);
-            
-            resolve({stdout, stderr});
+
+            resolve({ stdout, stderr });
         });
     });
 }
@@ -15,12 +15,26 @@ function compile(filepath) {
 function run(progpath) {
 
     let child = spawn('java', [progpath]);
-    child.stdout.on('data', data => console.log('>' + data));
-    child.stderr.on('data', data => console.error('<' + data));
-    
+
+    let stdio = readline.createInterface({
+        input: process.stdin,
+        output: process.stdout
+    });
+
+    child.stdout.on('data', data => process.stdout.write(data));
+    child.stderr.on('data', data => process.stderr.write(data));
+
     child.on('close', (code) => {
+        stdio.close(); 
+        stdio.removeAllListeners();
+
         console.log(`"${progpath}" exited with code ${code}`);
     });
+
+    stdio.on('line', line => {
+        child.stdin.write(line + '\n');
+    });
+
 }
 
 
