@@ -1,3 +1,5 @@
+#!/usr/bin/env node
+
 import { watcher } from './watcher.js';
 import readline from 'readline';
 import { compile, run } from './java.js';
@@ -36,7 +38,10 @@ if (import.meta.url === `file://${process.argv[1]}`) {
                 if (active === null) {
                     return null;
                 }
-                return active.replace('.java','').replace('/','.').replace('\\','.');
+                // This is for classes with packages (works weirdly)
+                // return active.replace('.java','').replace('/','.').replace('\\','.');
+                
+                return active.replace('.java','');
             }
             return javapath;
         }
@@ -46,6 +51,7 @@ if (import.meta.url === `file://${process.argv[1]}`) {
          ****************/
 
         let active = null;
+        let compiling = false;
 
         watcher(javapath, async filename => {
             // Compile the modified file
@@ -57,7 +63,9 @@ if (import.meta.url === `file://${process.argv[1]}`) {
             
             try {
 
+                compiling = true;
                 let { stdout, stderr } = await compile(compilepath);
+                compiling = false;
                 if (stdout) warn(stdout);
                 if (stderr) log(stderr);
 
@@ -65,6 +73,8 @@ if (import.meta.url === `file://${process.argv[1]}`) {
                 if (running) {
                     await abortProgram();
                 }
+
+                log('Finished compiling!');
 
             } catch (err) {
                 warn(
@@ -99,6 +109,7 @@ if (import.meta.url === `file://${process.argv[1]}`) {
             // Run the file
             log(`Running ${program}...`);
             running = true;
+
             let { aborted, code } = await run(program, stdio, controller);
             log(
                 ...(`${ aborted ? `"${program}" was killed earlyX` : ''}"${program}" exited with code ${code}`.split('X'))    
@@ -113,7 +124,7 @@ if (import.meta.url === `file://${process.argv[1]}`) {
         }
 
         stdio.on('line', async _ => {
-            if (!running) {
+            if (!(running || compiling)) {
                 await runProgram();
             }
         });
