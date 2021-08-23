@@ -43,7 +43,7 @@ if (import.meta.url === `file://${process.argv[1]}`) {
                 
                 return active.replace('.java','');
             }
-            return javapath;
+            return javapath.replace('.java','');
         }
 
         /****************
