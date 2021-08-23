@@ -55,14 +55,25 @@ if (import.meta.url === `file://${process.argv[1]}`) {
             
             log(`Compiling ${compilepath}...`);
             
-            let { stdout, stderr } = await compile(compilepath);
-            if (stdout) warn(stdout);
-            if (stderr) log(stderr);
+            try {
 
-            // If a program is running, kill it
-            if (running) {
-                await abortProgram();
+                let { stdout, stderr } = await compile(compilepath);
+                if (stdout) warn(stdout);
+                if (stderr) log(stderr);
+
+                // If a program is running, kill it
+                if (running) {
+                    await abortProgram();
+                }
+
+            } catch (err) {
+                warn(
+                    ...err.name.split('\n'),
+                    '',
+                    ...err.message.split('\n')
+                )
             }
+
         });
 
 
