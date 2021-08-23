@@ -1,4 +1,4 @@
-import { watch, lstatSync } from 'fs';
+import { watch } from 'fs';
 
 class Lock {
     update() {
