@@ -7,7 +7,7 @@ import { compile, run } from './java.js';
 import { lstatSync } from 'fs';
 import path from 'path';
 
-import { warn, welcome, log } from './logger.js';
+import { warn, welcome, log, warnError } from './logger.js';
 
 if (import.meta.url === `file://${process.argv[1]}`) {
     (async () => {
@@ -22,9 +22,15 @@ if (import.meta.url === `file://${process.argv[1]}`) {
             // console.error(`No path provided, using ${process.cwd()}`)
             javapath = './';
         }
-        welcome(javapath);
 
-        let isDirectory = lstatSync(javapath).isDirectory();
+        let isDirectory;
+        try {
+            isDirectory = lstatSync(javapath).isDirectory();
+        } catch(err) {
+            // lstat throws an error if the file doesn't exist (so print an error and leave)
+            warnError(err);
+            return 1;
+        }
 
         function getCompilePath(filename) {
             if (isDirectory) {
@@ -34,27 +40,26 @@ if (import.meta.url === `file://${process.argv[1]}`) {
         }
 
         function getProgramPath() {
+            let programpath = javapath;
             if (isDirectory) {
                 if (active === null) {
                     return null;
                 }
-                // This is for classes with packages (works weirdly)
-                // return active.replace('.java','').replace('/','.').replace('\\','.');
-                
-                return active.replace('.java','');
+                programpath = active;
             }
-            return javapath.replace('.java','');
+            programpath = program.replace('.java','');
+            return programpath;
         }
 
         /****************
          * FILE WATCHER *
          ****************/
 
+
         let active = null;
         let compiling = false;
 
-        watcher(javapath, async filename => {
-            // Compile the modified file
+        async function compileFile(filename) {
             let compilepath = getCompilePath(filename);
             
             active = compilepath; // set active file as soon as posible
@@ -77,13 +82,12 @@ if (import.meta.url === `file://${process.argv[1]}`) {
                 log('Finished compiling!');
 
             } catch (err) {
-                warn(
-                    ...err.name.split('\n'),
-                    '',
-                    ...err.message.split('\n')
-                )
+                warnError(err);
             }
+        }
 
+        watcher(javapath, async filename => {
+            await compileFile(filename);
         });
 
 
@@ -128,6 +132,27 @@ if (import.meta.url === `file://${process.argv[1]}`) {
                 await runProgram();
             }
         });
+
+        // idk if this is bad practice but this allows
+        // for one sigint to work 
+        stdio.on('SIGINT', () => {
+            log("Goodbye ;(")
+            // can also call process.emit('SIGINT') here but that requires
+            // a on('SIGINT') with process that just calls process.exit() 
+            process.exit();
+        });
+
+        /*****************
+         * STARTUP STUFF *
+         *****************/
+        
+        // put any startup stuff here so that it can run after 
+        // all the variables have been initialized
+
+        welcome(javapath);
+        if (!isDirectory) {
+            await compileFile(javapath);
+        }
 
     })();
 }

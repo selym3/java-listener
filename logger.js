@@ -35,6 +35,14 @@ export function warn(...messages) {
     );
 }
 
+export function warnError(err) {
+    warn(
+        ...err.name.split('\n'),
+        '',
+        ...err.message.split('\n')
+    )
+}
+
 export function log(...messages) {
     box(
         messages,
