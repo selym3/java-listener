@@ -15,6 +15,7 @@ node script to automatically compile and run java files when an IDE is not prefe
 
 ## todo
 
+* check for specific errors (to quit when necessary)
 * add --help to index
 * add better modularity to java helper function
 * combine callback model with classes???

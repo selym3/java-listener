@@ -26,6 +26,9 @@ if (import.meta.url === `file://${process.argv[1]}`) {
         let isDirectory;
         try {
             isDirectory = lstatSync(javapath).isDirectory();
+
+            if (!isDirectory && !javapath.endsWith('.java')) 
+                throw new Error('Provided file must be a .java file');
         } catch(err) {
             // lstat throws an error if the file doesn't exist (so print an error and leave)
             warnError(err);
