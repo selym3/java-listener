@@ -50,7 +50,7 @@ if (import.meta.url === `file://${process.argv[1]}`) {
                 }
                 programpath = active;
             }
-            programpath = program.replace('.java','');
+            programpath = programpath.replace('.java','');
             return programpath;
         }
 
