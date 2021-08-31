@@ -6,7 +6,7 @@ node script to automatically compile and run java files when an IDE is not prefe
 
 `node /path/to/index.js <java file or directoy (defaults to ./)>`
 
-* permissions should be changed on windows (shebang in included)
+* permissions should be changed on (except windows)
 * user can add an alias to terminal or symlink file
 * node version is >=15.0.0 (because of abort controller)
 * java-listener cannot detect changes to files recursively, so it is recommended to use with one file at a time
