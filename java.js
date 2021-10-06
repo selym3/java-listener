@@ -1,5 +1,4 @@
 import { spawn, exec } from 'child_process';
-import readline from 'readline';
 
 export function compile(filepath) {
     return new Promise((resolve, reject) => {
@@ -12,11 +11,50 @@ export function compile(filepath) {
     });
 }
 
-export function run(progpath, stdio, controller) {
+function parseArgs(args) {
+    let inQuote = false;
+    
+    let buffer = '';
+    let out = [];
+
+    for (let char of args) {
+        if (inQuote) {
+
+            // if in quote, 
+            if (char == '"') {
+                inQuote = false;
+            }
+            else {
+                buffer += char;
+            }
+        }
+
+        else {
+
+            // if not in quote, decide what to do
+            if (char == ' ') {
+                out.push(buffer);
+                buffer = '';
+            }
+            else if (char == '"') {
+                inQuote = true;
+            }
+            else {
+                buffer += char;
+            }
+        }
+    }
+    if (buffer != '') 
+        out.push(buffer);
+ 
+    return out;
+}
+
+export function run(progpath, args, stdio, controller) {
 
     return new Promise((resolve, reject) => {
         try {
-            let child = spawn('java', [progpath], {signal: controller.signal});
+            let child = spawn('java', [progpath, ...parseArgs(args)], {signal: controller.signal});
 
             let aborted = false;
 

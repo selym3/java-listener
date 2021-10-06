@@ -79,7 +79,7 @@ if (import.meta.url === `file://${process.argv[1]}`) {
 
                 // If a program is running, kill it
                 if (running) {
-                    await abortProgram();
+                    abortProgram();
                 }
 
                 log('Finished compiling!');
@@ -105,7 +105,7 @@ if (import.meta.url === `file://${process.argv[1]}`) {
         let controller = new AbortController();
         let running = false;
 
-        async function runProgram() {
+        async function runProgram(args) {
             // Determine what file to run
             let program = getProgramPath();
             if (program === null) {
@@ -117,7 +117,7 @@ if (import.meta.url === `file://${process.argv[1]}`) {
             log(`Running ${program}...`);
             running = true;
 
-            let { aborted, code } = await run(program, stdio, controller);
+            let { aborted, code } = await run(program, args, stdio, controller);
             log(
                 ...(`${ aborted ? `"${program}" was killed earlyX` : ''}"${program}" exited with code ${code}`.split('X'))    
             );
@@ -125,24 +125,30 @@ if (import.meta.url === `file://${process.argv[1]}`) {
             running = false;
         }
 
-        async function abortProgram() {
+        function abortProgram() {
             controller.abort();
             controller = new AbortController();
         }
 
-        stdio.on('line', async _ => {
+        stdio.on('line', async args => {
             if (!(running || compiling)) {
-                await runProgram();
+                await runProgram(args);
             }
         });
 
         // idk if this is bad practice but this allows
         // for one sigint to work 
         stdio.on('SIGINT', () => {
-            log("Goodbye ;(")
-            // can also call process.emit('SIGINT') here but that requires
-            // a on('SIGINT') with process that just calls process.exit() 
-            process.exit();
+            if (running) {
+                abortProgram(); 
+            } 
+
+            else {            
+                log("Goodbye ;(")
+                // can also call process.emit('SIGINT') here but that requires
+                // a on('SIGINT') with process that just calls process.exit() 
+                process.exit();
+            }
         });
 
         /*****************
